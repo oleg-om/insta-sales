@@ -128,6 +128,10 @@ router.get('/instagram', authMiddleware, (req: AuthRequest, res) => {
   const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
   const state = req.userId?.toString(); // Use userId as state for security
 
+  if (!clientId || !redirectUri) {
+    return res.status(500).json({ error: 'Instagram OAuth not configured' });
+  }
+
   // Facebook Login with Instagram Graph API permissions
   const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=instagram_basic,pages_show_list,business_management&response_type=code`;
 
