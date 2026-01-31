@@ -1,22 +1,21 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: insta-sales-db
+    container_name: insta-sales-db-prod
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-insta_sales}
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - insta-sales-network
+    restart: always
 
   backend:
     build:
@@ -24,21 +23,19 @@ services:
       dockerfile: Dockerfile
       args:
         NODE_ENV: production
-    container_name: insta-sales-backend
+    container_name: insta-sales-backend-prod
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-insta_sales}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       INSTAGRAM_CLIENT_ID: ${INSTAGRAM_CLIENT_ID}
       INSTAGRAM_CLIENT_SECRET: ${INSTAGRAM_CLIENT_SECRET}
       INSTAGRAM_REDIRECT_URI: ${INSTAGRAM_REDIRECT_URI}
       PORT: 3001
       NODE_ENV: production
-    ports:
-      - "3001:3001"
     depends_on:
       postgres:
         condition: service_healthy
-    restart: unless-stopped
+    restart: always
     networks:
       - insta-sales-network
     healthcheck:
@@ -53,13 +50,13 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
-    container_name: insta-sales-frontend
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: insta-sales-frontend-prod
     ports:
       - "80:80"
     depends_on:
       - backend
-    restart: unless-stopped
+    restart: always
     networks:
       - insta-sales-network
     healthcheck:
@@ -67,6 +64,22 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  nginx:
+    image: nginx:alpine
+    container_name: insta-sales-nginx
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: always
+    networks:
+      - insta-sales-network
 
 volumes:
   postgres_data:

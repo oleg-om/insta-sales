@@ -125,7 +125,7 @@ The application will be available at:
 
 ## Docker Deployment
 
-Build and run all services with Docker:
+### Development
 
 ```bash
 # Build and start all containers
@@ -141,6 +141,43 @@ docker-compose down
 Access the application:
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:3001
+
+### Production
+
+#### Локальный деплой на сервер:
+
+```bash
+# Deploy to production
+./scripts/deploy.sh
+
+# Check status
+./scripts/status.sh
+
+# View logs
+./scripts/logs.sh
+
+# Backup database
+./scripts/backup.sh
+```
+
+#### Автоматический деплой через GitHub Actions:
+
+**Вариант 1: Деплой через SSH (БЕЗ Docker Hub) - РЕКОМЕНДУЕТСЯ**
+```bash
+# Push в main ветку запускает автоматический деплой
+git push origin main
+```
+
+**Вариант 2: Деплой через Docker Hub**
+- Требует Docker Hub аккаунт
+- Запускается вручную через GitHub Actions
+
+**Документация:**
+- 🎯 [DEPLOY_OPTIONS.md](./DEPLOY_OPTIONS.md) - Сравнение вариантов деплоя
+- 🚀 [SSH_QUICKSTART.md](./SSH_QUICKSTART.md) - Быстрая настройка SSH (5 минут)
+- 📖 [SSH_SETUP.md](./SSH_SETUP.md) - Детальная настройка SSH
+- 📋 [DEPLOYMENT.md](./DEPLOYMENT.md) - Полное руководство по деплою
+- 🔐 [.github/SECRETS.md](./.github/SECRETS.md) - Настройка GitHub Secrets
 
 ## Project Structure
 

@@ -40,8 +40,8 @@
     "connected": "Connected",
     "connectedOn": "Connected on",
     "instagramConnectSuccess": "Instagram account connected successfully",
-    "instagramConnectError": "Failed to connect Instagram account",
-    "noBusinessAccount": "No Instagram Business Account found. Please convert your Instagram to Business Account and link it to a Facebook Page."
+    "instagramConnectError": "Failed to connect Instagram account. Please check your Instagram app settings.",
+    "noBusinessAccount": "Instagram connection failed. Please make sure you have an Instagram account and try again."
   },
   "language": {
     "select": "Select language",
