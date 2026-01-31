@@ -73,6 +73,7 @@ services:
     container_name: insta-sales-nginx
     environment:
       DOMAIN: ${DOMAIN:-localhost}
+      USE_CLOUDFLARE: ${USE_CLOUDFLARE:-false}
     ports:
       - "80:80"
       - "443:443"

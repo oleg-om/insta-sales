@@ -181,6 +181,7 @@ git push origin main
 - 📋 [DEPLOYMENT.md](./DEPLOYMENT.md) - Полное руководство по деплою
 - 🔐 [.github/SECRETS.md](./.github/SECRETS.md) - Настройка GitHub Secrets
 - 🌐 [DOMAIN_ENV.md](./DOMAIN_ENV.md) - **Домен через .env (НОВОЕ!)** ⭐
+- ☁️ [CLOUDFLARE_SETUP.md](./CLOUDFLARE_SETUP.md) - **Настройка с Cloudflare SSL** ⭐
 - 🌐 [DOMAIN_QUICKFIX.md](./DOMAIN_QUICKFIX.md) - Быстрое решение проблем с доменом
 - 🌐 [DOMAIN_SETUP.md](./DOMAIN_SETUP.md) - Полная настройка домена и SSL
 - 🔧 [ENV_SETUP.md](./ENV_SETUP.md) - Настройка переменных окружения

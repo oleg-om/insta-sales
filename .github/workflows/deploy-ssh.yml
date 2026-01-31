@@ -52,6 +52,7 @@ jobs:
             INSTAGRAM_REDIRECT_URI=${{ secrets.INSTAGRAM_REDIRECT_URI }}
             VITE_API_URL=${{ secrets.VITE_API_URL }}
             DOMAIN=${{ secrets.DOMAIN }}
+            USE_CLOUDFLARE=${{ secrets.USE_CLOUDFLARE }}
             PORT=3001
             NODE_ENV=production
             EOF
