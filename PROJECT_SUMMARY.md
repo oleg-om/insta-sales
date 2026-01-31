@@ -29,6 +29,9 @@ A full-stack web application with email/password authentication and Instagram OA
 - ✅ Toast notifications for user feedback
 - ✅ Loading states and error handling
 - ✅ Protected route with loading indicator
+- ✅ **Multilingual support (English & Russian)** 🌐
+- ✅ Language switcher component with auto-detection
+- ✅ Persistent language preference in localStorage
 
 ### Backend API
 - ✅ RESTful API with Express
@@ -87,9 +90,15 @@ insta-sales/
 │   │   │   │   ├── toast.tsx
 │   │   │   │   ├── toaster.tsx
 │   │   │   │   └── use-toast.ts
-│   │   │   └── ProtectedRoute.tsx
+│   │   │   ├── ProtectedRoute.tsx
+│   │   │   └── LanguageSwitcher.tsx # Language switcher
 │   │   ├── contexts/
 │   │   │   └── AuthContext.tsx # Auth state management
+│   │   ├── i18n/
+│   │   │   ├── config.ts       # i18next configuration
+│   │   │   └── locales/
+│   │   │       ├── en.json     # English translations
+│   │   │       └── ru.json     # Russian translations
 │   │   ├── lib/
 │   │   │   ├── api.ts          # API client with axios
 │   │   │   └── utils.ts        # Utility functions
@@ -128,6 +137,9 @@ insta-sales/
 - **Radix UI** - Headless components
 - **Tailwind CSS** - Styling
 - **Lucide React** - Icons
+- **i18next** - Internationalization
+- **react-i18next** - React i18n integration
+- **i18next-browser-languagedetector** - Auto language detection
 
 ### Backend Stack
 - **Node.js 20** - Runtime
@@ -251,6 +263,11 @@ All UI components are built with shadcn/ui and Radix UI:
 - **QUICKSTART.md** - Quick start guide for developers
 - **ARCHITECTURE.md** - Detailed architecture and flow diagrams
 - **PROJECT_SUMMARY.md** - This file
+- **INTERNATIONALIZATION.md** - Complete i18n documentation
+- **I18N_QUICK_START.md** - Quick start guide for multilingual features
+- **INSTAGRAM_SETUP.md** - Instagram OAuth setup guide
+- **INSTAGRAM_QUICK_FIX.md** - Quick fix for Instagram issues
+- **TROUBLESHOOTING.md** - Common issues and solutions
 
 ## 🎯 Next Steps
 

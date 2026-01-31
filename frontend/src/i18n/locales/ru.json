@@ -40,8 +40,8 @@
     "connected": "Подключено",
     "connectedOn": "Подключено",
     "instagramConnectSuccess": "Instagram аккаунт успешно подключен",
-    "instagramConnectError": "Не удалось подключить Instagram аккаунт",
-    "noBusinessAccount": "Instagram Business аккаунт не найден. Пожалуйста, конвертируйте ваш Instagram в Business аккаунт и свяжите его с Facebook страницей."
+    "instagramConnectError": "Не удалось подключить Instagram аккаунт. Проверьте настройки приложения Instagram.",
+    "noBusinessAccount": "Не удалось подключить Instagram. Убедитесь, что у вас есть аккаунт Instagram и попробуйте снова."
   },
   "language": {
     "select": "Выберите язык",

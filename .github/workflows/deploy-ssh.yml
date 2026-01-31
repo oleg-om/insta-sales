@@ -1,0 +1,104 @@
+name: Deploy via SSH (without Docker Hub)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            set -e
+            
+            echo "📦 Deploying to server..."
+            
+            # Navigate to app directory
+            cd /opt/insta-sales || mkdir -p /opt/insta-sales && cd /opt/insta-sales
+            
+            # Clone or pull repository
+            if [ -d ".git" ]; then
+              echo "📥 Pulling latest changes..."
+              git pull origin main
+            else
+              echo "📥 Cloning repository..."
+              git clone https://github.com/${{ github.repository }}.git .
+            fi
+            
+            # Create .env if not exists
+            if [ ! -f ".env" ]; then
+              echo "📝 Creating .env file..."
+              cat > .env << 'EOF'
+            DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            INSTAGRAM_CLIENT_ID=${{ secrets.INSTAGRAM_CLIENT_ID }}
+            INSTAGRAM_CLIENT_SECRET=${{ secrets.INSTAGRAM_CLIENT_SECRET }}
+            INSTAGRAM_REDIRECT_URI=${{ secrets.INSTAGRAM_REDIRECT_URI }}
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            PORT=3001
+            NODE_ENV=production
+            EOF
+            fi
+            
+            # Stop old containers
+            echo "🛑 Stopping old containers..."
+            docker-compose down || true
+            
+            # Build new images
+            echo "🔨 Building Docker images..."
+            docker-compose build --no-cache
+            
+            # Start new containers
+            echo "▶️  Starting containers..."
+            docker-compose up -d
+            
+            # Wait for services to start
+            echo "⏳ Waiting for services..."
+            sleep 10
+            
+            # Run migrations
+            echo "🗄️  Running migrations..."
+            docker exec insta-sales-backend node dist/db/migrate.js || true
+            
+            # Check health
+            echo "🏥 Checking health..."
+            if docker exec insta-sales-backend wget --no-verbose --tries=1 --spider http://localhost:3001/health; then
+              echo "✅ Backend is healthy"
+            else
+              echo "⚠️  Backend health check failed"
+            fi
+            
+            # Clean up old images
+            echo "🧹 Cleaning up..."
+            docker image prune -af --filter "until=24h" || true
+            
+            echo "🎉 Deployment completed!"
+            echo ""
+            echo "Services status:"
+            docker-compose ps
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"

@@ -122,14 +122,14 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
-// Instagram OAuth - Initiate (using Facebook Login)
+// Instagram OAuth - Initiate (via Facebook)
 router.get('/instagram', authMiddleware, (req: AuthRequest, res) => {
   const clientId = process.env.INSTAGRAM_CLIENT_ID;
   const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
   const state = req.userId?.toString(); // Use userId as state for security
 
-  // Use Facebook OAuth with Instagram permissions
-  const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=instagram_basic,pages_show_list,instagram_manage_insights&response_type=code`;
+  // Facebook Login with Instagram Graph API permissions
+  const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=instagram_basic,pages_show_list,business_management&response_type=code`;
 
   res.json({ authUrl });
 });
@@ -147,7 +147,7 @@ router.get('/instagram/callback', async (req, res) => {
 
     // Exchange code for access token (Facebook Graph API)
     const tokenResponse = await axios.get(
-      `https://graph.facebook.com/v18.0/oauth/access_token`,
+      `https://graph.facebook.com/v19.0/oauth/access_token`,
       {
         params: {
           client_id: process.env.INSTAGRAM_CLIENT_ID!,
@@ -160,13 +160,13 @@ router.get('/instagram/callback', async (req, res) => {
 
     const { access_token } = tokenResponse.data;
 
-    // Get Facebook user's pages
+    // Get user's Facebook pages
     const pagesResponse = await axios.get(
-      `https://graph.facebook.com/v18.0/me/accounts`,
+      `https://graph.facebook.com/v19.0/me/accounts`,
       {
         params: {
           access_token,
-          fields: 'instagram_business_account',
+          fields: 'instagram_business_account,name',
         },
       }
     );
@@ -174,6 +174,7 @@ router.get('/instagram/callback', async (req, res) => {
     // Find Instagram Business Account
     let instagramAccountId = null;
     let username = null;
+    let user_id = null;
 
     if (pagesResponse.data.data && pagesResponse.data.data.length > 0) {
       for (const page of pagesResponse.data.data) {
@@ -182,28 +183,28 @@ router.get('/instagram/callback', async (req, res) => {
           
           // Get Instagram username
           const igProfileResponse = await axios.get(
-            `https://graph.facebook.com/v18.0/${instagramAccountId}`,
+            `https://graph.facebook.com/v19.0/${instagramAccountId}`,
             {
               params: {
-                fields: 'username',
+                fields: 'username,id',
                 access_token,
               },
             }
           );
           
           username = igProfileResponse.data.username;
+          user_id = igProfileResponse.data.id;
           break;
         }
       }
     }
 
     if (!instagramAccountId || !username) {
+      console.error('No Instagram Business Account found');
       return res.redirect(
         `http://localhost:5173/dashboard?error=no_instagram_business_account`
       );
     }
-
-    const user_id = instagramAccountId;
 
     // Save or update Instagram account
     await query(
