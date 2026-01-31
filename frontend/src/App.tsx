@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { Toaster } from './components/ui/toaster';
+import './i18n/config';
 
 function App() {
   return (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -21,6 +23,7 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,14 +32,14 @@ export const LoginPage: React.FC = () => {
     try {
       await login(email, password);
       toast({
-        title: 'Success',
-        description: 'Logged in successfully',
+        title: t('common.success'),
+        description: t('auth.loginSuccess'),
       });
       navigate('/dashboard');
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.response?.data?.error || 'Failed to login',
+        title: t('common.error'),
+        description: error.response?.data?.error || t('auth.loginError'),
         variant: 'destructive',
       });
     } finally {
@@ -46,19 +49,22 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Welcome back
+            {t('auth.welcomeBack')}
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your account
+            {t('auth.enterCredentials')}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('common.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -69,11 +75,11 @@ export const LoginPage: React.FC = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('common.password')}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t('common.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -82,15 +88,15 @@ export const LoginPage: React.FC = () => {
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? t('auth.loggingIn') : t('common.login')}
             </Button>
             <p className="text-sm text-center text-muted-foreground">
-              Don't have an account?{' '}
+              {t('auth.dontHaveAccount')}{' '}
               <Link
                 to="/register"
                 className="text-primary hover:underline font-medium"
               >
-                Register
+                {t('common.register')}
               </Link>
             </p>
           </CardFooter>

@@ -122,13 +122,14 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
-// Instagram OAuth - Initiate
+// Instagram OAuth - Initiate (using Facebook Login)
 router.get('/instagram', authMiddleware, (req: AuthRequest, res) => {
   const clientId = process.env.INSTAGRAM_CLIENT_ID;
   const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
   const state = req.userId?.toString(); // Use userId as state for security
 
-  const authUrl = `https://api.instagram.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user_profile&response_type=code&state=${state}`;
+  // Use Facebook OAuth with Instagram permissions
+  const authUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}&scope=instagram_basic,pages_show_list,instagram_manage_insights&response_type=code`;
 
   res.json({ authUrl });
 });
@@ -144,31 +145,65 @@ router.get('/instagram/callback', async (req, res) => {
 
     const userId = parseInt(state as string);
 
-    // Exchange code for access token
-    const tokenResponse = await axios.post(
-      'https://api.instagram.com/oauth/access_token',
-      new URLSearchParams({
-        client_id: process.env.INSTAGRAM_CLIENT_ID!,
-        client_secret: process.env.INSTAGRAM_CLIENT_SECRET!,
-        grant_type: 'authorization_code',
-        redirect_uri: process.env.INSTAGRAM_REDIRECT_URI!,
-        code: code as string,
-      }),
+    // Exchange code for access token (Facebook Graph API)
+    const tokenResponse = await axios.get(
+      `https://graph.facebook.com/v18.0/oauth/access_token`,
       {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+        params: {
+          client_id: process.env.INSTAGRAM_CLIENT_ID!,
+          client_secret: process.env.INSTAGRAM_CLIENT_SECRET!,
+          redirect_uri: process.env.INSTAGRAM_REDIRECT_URI!,
+          code: code as string,
         },
       }
     );
 
-    const { access_token, user_id } = tokenResponse.data;
+    const { access_token } = tokenResponse.data;
 
-    // Get user profile
-    const profileResponse = await axios.get(
-      `https://graph.instagram.com/me?fields=id,username&access_token=${access_token}`
+    // Get Facebook user's pages
+    const pagesResponse = await axios.get(
+      `https://graph.facebook.com/v18.0/me/accounts`,
+      {
+        params: {
+          access_token,
+          fields: 'instagram_business_account',
+        },
+      }
     );
 
-    const { username } = profileResponse.data;
+    // Find Instagram Business Account
+    let instagramAccountId = null;
+    let username = null;
+
+    if (pagesResponse.data.data && pagesResponse.data.data.length > 0) {
+      for (const page of pagesResponse.data.data) {
+        if (page.instagram_business_account) {
+          instagramAccountId = page.instagram_business_account.id;
+          
+          // Get Instagram username
+          const igProfileResponse = await axios.get(
+            `https://graph.facebook.com/v18.0/${instagramAccountId}`,
+            {
+              params: {
+                fields: 'username',
+                access_token,
+              },
+            }
+          );
+          
+          username = igProfileResponse.data.username;
+          break;
+        }
+      }
+    }
+
+    if (!instagramAccountId || !username) {
+      return res.redirect(
+        `http://localhost:5173/dashboard?error=no_instagram_business_account`
+      );
+    }
+
+    const user_id = instagramAccountId;
 
     // Save or update Instagram account
     await query(

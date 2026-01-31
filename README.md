@@ -4,10 +4,11 @@ Full-stack application with email/password authentication and Instagram OAuth in
 
 ## Tech Stack
 
-- **Frontend**: React, TypeScript, Vite, shadcn/ui, Radix UI, Tailwind CSS
+- **Frontend**: React, TypeScript, Vite, shadcn/ui, Radix UI, Tailwind CSS, i18next
 - **Backend**: Node.js, Express, TypeScript
 - **Database**: PostgreSQL
 - **Infrastructure**: Docker, Docker Compose
+- **Internationalization**: English & Russian support
 
 ## Features
 
@@ -18,6 +19,7 @@ Full-stack application with email/password authentication and Instagram OAuth in
 - ✅ Modern UI with shadcn/ui components
 - ✅ Responsive design
 - ✅ Docker containerization
+- ✅ **Multilingual support (English & Russian)** 🌐
 
 ## Prerequisites
 
@@ -76,11 +78,16 @@ VITE_API_URL=http://localhost:3001
 
 ### 3. Setup Instagram App
 
+**Important:** Instagram now requires Facebook Login with Instagram Business Account.
+
 1. Go to [Meta for Developers](https://developers.facebook.com/)
-2. Create a new app or use existing one
-3. Add Instagram Basic Display product
-4. Configure OAuth Redirect URIs: `http://localhost:3001/api/auth/instagram/callback`
-5. Copy Client ID and Client Secret to `.env`
+2. Create a Facebook App (Business type)
+3. Add "Facebook Login" product
+4. Configure Valid OAuth Redirect URIs: `http://localhost:3001/api/auth/instagram/callback`
+5. Copy App ID and App Secret to `.env`
+6. Convert your Instagram to Business Account and link to Facebook Page
+
+**Detailed instructions:** See [INSTAGRAM_SETUP.md](./INSTAGRAM_SETUP.md)
 
 ### 4. Start Database
 
@@ -194,6 +201,34 @@ npm run dev        # Start development server
 npm run build      # Build for production
 npm run preview    # Preview production build
 ```
+
+## Internationalization (i18n)
+
+The application supports multiple languages:
+
+- 🇬🇧 **English** (default)
+- 🇷🇺 **Русский** (Russian)
+
+### Language Switching
+
+Users can switch languages using the language switcher button (🌐) available on:
+- Login page (top right)
+- Registration page (top right)
+- Dashboard (navigation bar)
+
+The selected language is automatically saved to localStorage.
+
+### For Developers
+
+See [INTERNATIONALIZATION.md](./INTERNATIONALIZATION.md) for:
+- Adding new translations
+- Adding new languages
+- Translation file structure
+- Best practices
+
+**Translation files location:**
+- `frontend/src/i18n/locales/en.json` - English
+- `frontend/src/i18n/locales/ru.json` - Russian
 
 ## Database Schema
 

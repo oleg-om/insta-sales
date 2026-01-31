@@ -94,15 +94,38 @@ cd backend && npm run migrate
 ### 5. Instagram OAuth Not Working
 
 **Symptom:**
+- "Invalid platform app" error
+- "No Instagram Business Account found" error
 - Redirect fails
 - "Invalid redirect URI" error
 
 **Solution:**
-1. Check Instagram App settings at [Meta for Developers](https://developers.facebook.com/)
-2. Verify OAuth Redirect URI is exactly: `http://localhost:3001/api/auth/instagram/callback`
-3. Ensure your Instagram account is added as a test user
-4. Accept the test user invitation in Instagram app
-5. Make sure Client ID and Secret in `.env` are correct
+
+**Important:** Instagram Basic Display API больше не работает. Нужно использовать Facebook Login.
+
+1. **Проверьте тип приложения:**
+   - Должно быть Facebook App (не Instagram Basic Display)
+   - Должен быть добавлен продукт "Facebook Login"
+
+2. **Проверьте настройки Facebook Login:**
+   - Перейдите в Facebook App → Facebook Login → Settings
+   - В "Valid OAuth Redirect URIs" должен быть: `http://localhost:3001/api/auth/instagram/callback`
+
+3. **Проверьте Instagram аккаунт:**
+   - Должен быть **Business Account** (не Personal)
+   - Должен быть связан с **Facebook Page**
+   - Конвертация: Instagram → Settings → Account → Switch to Professional Account → Business
+
+4. **Проверьте права доступа:**
+   - В Facebook App должны быть запрошены права: `instagram_basic`, `pages_show_list`
+   - Для тестирования добавьте себя как Developer или Test User
+
+5. **Проверьте .env файл:**
+   - `INSTAGRAM_CLIENT_ID` = Facebook App ID
+   - `INSTAGRAM_CLIENT_SECRET` = Facebook App Secret
+   - `INSTAGRAM_REDIRECT_URI` = точный URI из настроек
+
+**Подробная инструкция:** См. [INSTAGRAM_SETUP.md](./INSTAGRAM_SETUP.md)
 
 ### 6. Frontend Can't Connect to Backend
 
