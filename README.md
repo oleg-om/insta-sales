@@ -2,6 +2,8 @@
 
 Full-stack application with email/password authentication and Instagram OAuth integration.
 
+**📖 Быстрый старт:** [QUICKSTART.md](./QUICKSTART.md) - Инструкция для запуска за 5 минут
+
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Vite, shadcn/ui, Radix UI, Tailwind CSS, i18next
@@ -178,6 +180,10 @@ git push origin main
 - 📖 [SSH_SETUP.md](./SSH_SETUP.md) - Детальная настройка SSH
 - 📋 [DEPLOYMENT.md](./DEPLOYMENT.md) - Полное руководство по деплою
 - 🔐 [.github/SECRETS.md](./.github/SECRETS.md) - Настройка GitHub Secrets
+- 🌐 [DOMAIN_ENV.md](./DOMAIN_ENV.md) - **Домен через .env (НОВОЕ!)** ⭐
+- 🌐 [DOMAIN_QUICKFIX.md](./DOMAIN_QUICKFIX.md) - Быстрое решение проблем с доменом
+- 🌐 [DOMAIN_SETUP.md](./DOMAIN_SETUP.md) - Полная настройка домена и SSL
+- 🔧 [ENV_SETUP.md](./ENV_SETUP.md) - Настройка переменных окружения
 
 ## Project Structure
 

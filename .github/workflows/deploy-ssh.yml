@@ -51,6 +51,7 @@ jobs:
             INSTAGRAM_CLIENT_SECRET=${{ secrets.INSTAGRAM_CLIENT_SECRET }}
             INSTAGRAM_REDIRECT_URI=${{ secrets.INSTAGRAM_REDIRECT_URI }}
             VITE_API_URL=${{ secrets.VITE_API_URL }}
+            DOMAIN=${{ secrets.DOMAIN }}
             PORT=3001
             NODE_ENV=production
             EOF

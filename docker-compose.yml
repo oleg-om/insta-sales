@@ -55,8 +55,6 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
     container_name: insta-sales-frontend
-    ports:
-      - "80:80"
     depends_on:
       - backend
     restart: unless-stopped
@@ -67,6 +65,25 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: insta-sales-nginx
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+    networks:
+      - insta-sales-network
 
 volumes:
   postgres_data:
