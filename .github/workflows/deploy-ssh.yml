@@ -58,15 +58,15 @@ jobs:
             
             # Stop old containers
             echo "🛑 Stopping old containers..."
-            docker-compose down || true
+            docker compose down || true
             
             # Build new images
             echo "🔨 Building Docker images..."
-            docker-compose build --no-cache
+            docker compose build --no-cache
             
             # Start new containers
             echo "▶️  Starting containers..."
-            docker-compose up -d
+            docker compose up -d
             
             # Wait for services to start
             echo "⏳ Waiting for services..."
@@ -91,7 +91,7 @@ jobs:
             echo "🎉 Deployment completed!"
             echo ""
             echo "Services status:"
-            docker-compose ps
+            docker compose ps
 
       - name: Notify on success
         if: success()
