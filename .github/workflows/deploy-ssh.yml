@@ -62,7 +62,10 @@ jobs:
             
             # Frontend
             FRONTEND_URL=${{ secrets.FRONTEND_URL || 'http://localhost' }}
-            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            
+            # VITE_API_URL is optional - frontend uses relative URLs by default (through nginx proxy)
+            # Only set if you need explicit API URL (uncommon)
+            # VITE_API_URL=
             ENVEOF
             
             # Stop old containers

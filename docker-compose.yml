@@ -51,7 +51,7 @@ services:
       context: .
       dockerfile: client/Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL}
+        VITE_API_URL: ${VITE_API_URL:-}
     container_name: insta-sales-frontend
     restart: unless-stopped
     ports:
@@ -60,8 +60,6 @@ services:
       - backend
     networks:
       - app-network
-    profiles:
-      - default
 
   # Reverse proxy with rate limiting and SSL (for production)
   # To use: docker compose --profile with-proxy up -d
