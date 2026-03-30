@@ -6,13 +6,13 @@ WORKDIR /app
 FROM base AS deps
 COPY package*.json ./
 COPY server/package*.json ./server/
-RUN npm ci --workspace=server --omit=dev
+RUN npm i --workspace=server --omit=dev
 
 # Build application
 FROM base AS builder
 COPY package*.json ./
 COPY server/package*.json ./server/
-RUN npm ci --workspace=server
+RUN npm i --workspace=server
 COPY server/ ./server/
 RUN npm run build --workspace=server
 

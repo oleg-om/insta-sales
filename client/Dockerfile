@@ -10,7 +10,7 @@ COPY package*.json ./
 COPY client/package*.json ./client/
 
 # Install dependencies
-RUN npm ci --workspace=client
+RUN npm i --workspace=client
 
 # Copy client source
 COPY client/ ./client/
