@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: insta-sales-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-instasales}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-instasales}
+      POSTGRES_DB: ${POSTGRES_DB:-instasales}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-instasales}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: insta-sales-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-instasales}:${POSTGRES_PASSWORD:-instasales}@postgres:5432/${POSTGRES_DB:-instasales}
+      JWT_SECRET: ${JWT_SECRET}
+      INSTAGRAM_CLIENT_ID: ${INSTAGRAM_CLIENT_ID}
+      INSTAGRAM_CLIENT_SECRET: ${INSTAGRAM_CLIENT_SECRET}
+      INSTAGRAM_REDIRECT_URI: ${INSTAGRAM_REDIRECT_URI}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: insta-sales-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  # Reverse proxy (optional, if you want to use nginx as reverse proxy)
+  nginx:
+    image: nginx:alpine
+    container_name: insta-sales-nginx
+    restart: unless-stopped
+    ports:
+      - "${PORT:-80}:80"
+      - "${SSL_PORT:-443}:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app-network
+    profiles:
+      - with-proxy
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

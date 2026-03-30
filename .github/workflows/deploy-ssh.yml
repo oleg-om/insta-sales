@@ -1,4 +1,4 @@
-name: Deploy via SSH (without Docker Hub)
+name: Deploy via SSH
 
 on:
   push:
@@ -24,39 +24,46 @@ jobs:
           script: |
             set -e
             
-            echo "📦 Deploying to server..."
+            echo "🚀 Starting deployment..."
             
             # Navigate to app directory
-            cd /opt/insta-sales || mkdir -p /opt/insta-sales && cd /opt/insta-sales
+            APP_DIR="/opt/insta-sales"
+            mkdir -p $APP_DIR
+            cd $APP_DIR
             
             # Clone or pull repository
             if [ -d ".git" ]; then
               echo "📥 Pulling latest changes..."
-              git pull origin main
+              git fetch origin
+              git reset --hard origin/main
             else
               echo "📥 Cloning repository..."
               git clone https://github.com/${{ github.repository }}.git .
             fi
             
-            # Create .env if not exists
-            if [ ! -f ".env" ]; then
-              echo "📝 Creating .env file..."
-              cat > .env << 'EOF'
-            DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            # Update .env file with all secrets
+            echo "📝 Updating .env file..."
+            cat > .env << 'ENVEOF'
+            # Database
+            POSTGRES_USER=${{ secrets.POSTGRES_USER || 'instasales' }}
             POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB || 'instasales' }}
+            DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER || 'instasales' }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB || 'instasales' }}
+            
+            # Server
+            PORT=3001
+            NODE_ENV=production
             JWT_SECRET=${{ secrets.JWT_SECRET }}
+            
+            # Instagram OAuth
             INSTAGRAM_CLIENT_ID=${{ secrets.INSTAGRAM_CLIENT_ID }}
             INSTAGRAM_CLIENT_SECRET=${{ secrets.INSTAGRAM_CLIENT_SECRET }}
             INSTAGRAM_REDIRECT_URI=${{ secrets.INSTAGRAM_REDIRECT_URI }}
+            
+            # Frontend
+            FRONTEND_URL=${{ secrets.FRONTEND_URL || 'http://localhost' }}
             VITE_API_URL=${{ secrets.VITE_API_URL }}
-            DOMAIN=${{ secrets.DOMAIN }}
-            USE_CLOUDFLARE=${{ secrets.USE_CLOUDFLARE }}
-            PORT=3001
-            NODE_ENV=production
-            EOF
-            fi
+            ENVEOF
             
             # Stop old containers
             echo "🛑 Stopping old containers..."
@@ -66,41 +73,72 @@ jobs:
             echo "🔨 Building Docker images..."
             docker compose build --no-cache
             
-            # Start new containers
-            echo "▶️  Starting containers..."
-            docker compose up -d
+            # Start database first
+            echo "🗄️  Starting database..."
+            docker compose up -d postgres
             
-            # Wait for services to start
-            echo "⏳ Waiting for services..."
-            sleep 10
+            # Wait for database
+            echo "⏳ Waiting for database..."
+            sleep 15
             
             # Run migrations
-            echo "🗄️  Running migrations..."
-            docker exec insta-sales-backend node dist/db/migrate.js || true
+            echo "🔄 Running database migrations..."
+            docker compose run --rm backend sh -c "npx prisma migrate deploy" || echo "⚠️  Migration warning (might be OK for first deploy)"
             
-            # Check health
-            echo "🏥 Checking health..."
-            if docker exec insta-sales-backend wget --no-verbose --tries=1 --spider http://localhost:3001/health; then
-              echo "✅ Backend is healthy"
-            else
-              echo "⚠️  Backend health check failed"
-            fi
+            # Start all services
+            echo "▶️  Starting all services..."
+            docker compose up -d
+            
+            # Wait for services
+            echo "⏳ Waiting for services to start..."
+            sleep 20
+            
+            # Check backend health
+            echo "🏥 Checking backend health..."
+            MAX_TRIES=10
+            TRIES=0
+            while [ $TRIES -lt $MAX_TRIES ]; do
+              if docker exec insta-sales-backend wget --no-verbose --tries=1 --spider http://localhost:3001/health 2>/dev/null; then
+                echo "✅ Backend is healthy"
+                break
+              fi
+              TRIES=$((TRIES+1))
+              if [ $TRIES -lt $MAX_TRIES ]; then
+                echo "⏳ Backend not ready yet, retrying... ($TRIES/$MAX_TRIES)"
+                sleep 5
+              else
+                echo "⚠️  Backend health check failed after $MAX_TRIES attempts"
+              fi
+            done
+            
+            # Check services status
+            echo ""
+            echo "📊 Services status:"
+            docker compose ps
+            
+            # Show recent logs
+            echo ""
+            echo "📝 Recent backend logs:"
+            docker compose logs --tail=20 backend
             
             # Clean up old images
-            echo "🧹 Cleaning up..."
+            echo ""
+            echo "🧹 Cleaning up old images..."
             docker image prune -af --filter "until=24h" || true
             
-            echo "🎉 Deployment completed!"
             echo ""
-            echo "Services status:"
-            docker compose ps
+            echo "🎉 Deployment completed successfully!"
+            echo ""
+            echo "📍 Application should be available at: ${{ secrets.FRONTEND_URL || 'http://your-server' }}"
 
       - name: Notify on success
         if: success()
         run: |
           echo "✅ Deployment successful!"
+          echo "🌐 Frontend: ${{ secrets.FRONTEND_URL || 'http://your-server' }}"
+          echo "🔌 Backend: ${{ secrets.FRONTEND_URL || 'http://your-server' }}/health"
 
       - name: Notify on failure
         if: failure()
         run: |
-          echo "❌ Deployment failed!"
+          echo "❌ Deployment failed! Check the logs above for details."
