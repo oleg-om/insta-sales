@@ -1,18 +1,21 @@
 FROM node:20-alpine AS base
 
+# Install OpenSSL for Prisma
+RUN apk add --no-cache openssl1.1-compat libc6-compat
+
 WORKDIR /app
 
 # Install dependencies
 FROM base AS deps
 COPY package*.json ./
 COPY server/package*.json ./server/
-RUN npm i --workspace=server --omit=dev
+RUN npm ci --workspace=server --omit=dev
 
 # Build application
 FROM base AS builder
 COPY package*.json ./
 COPY server/package*.json ./server/
-RUN npm i --workspace=server
+RUN npm ci --workspace=server
 COPY server/ ./server/
 RUN npm run build --workspace=server
 
