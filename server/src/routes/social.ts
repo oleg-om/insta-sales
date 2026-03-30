@@ -6,6 +6,23 @@ import { AppError } from '../middleware/errorHandler.js';
 const router = Router();
 const prisma = new PrismaClient();
 
+// Instagram API response types
+interface InstagramTokenResponse {
+  access_token: string;
+  user_id: number;
+  error_message?: string;
+}
+
+interface InstagramLongLivedTokenResponse {
+  access_token?: string;
+  expires_in?: number;
+}
+
+interface InstagramProfileResponse {
+  id: string;
+  username: string;
+}
+
 router.get('/instagram/authorize', authenticateToken, (req: AuthRequest, res) => {
   const clientId = process.env.INSTAGRAM_CLIENT_ID;
   const redirectUri = process.env.INSTAGRAM_REDIRECT_URI;
@@ -38,7 +55,7 @@ router.get('/instagram/callback', async (req, res) => {
       }),
     });
 
-    const tokenData = await tokenResponse.json();
+    const tokenData = await tokenResponse.json() as InstagramTokenResponse;
 
     if (!tokenResponse.ok) {
       throw new Error(tokenData.error_message || 'Failed to get access token');
@@ -48,7 +65,7 @@ router.get('/instagram/callback', async (req, res) => {
       `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_CLIENT_SECRET}&access_token=${tokenData.access_token}`
     );
 
-    const longLivedData = await longLivedTokenResponse.json();
+    const longLivedData = await longLivedTokenResponse.json() as InstagramLongLivedTokenResponse;
 
     const accessToken = longLivedData.access_token || tokenData.access_token;
     const expiresIn = longLivedData.expires_in;
@@ -56,7 +73,7 @@ router.get('/instagram/callback', async (req, res) => {
     const profileResponse = await fetch(
       `https://graph.instagram.com/me?fields=id,username&access_token=${accessToken}`
     );
-    const profileData = await profileResponse.json();
+    const profileData = await profileResponse.json() as InstagramProfileResponse;
 
     await prisma.socialAccount.upsert({
       where: {
