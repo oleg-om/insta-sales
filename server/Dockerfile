@@ -1,7 +1,10 @@
-FROM node:20-alpine AS base
+FROM node:20-slim AS base
 
-# Install OpenSSL for Prisma
-RUN apk add --no-cache openssl1.1-compat libc6-compat
+# Install OpenSSL and other dependencies for Prisma
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -41,9 +44,9 @@ COPY --from=builder /app/server/prisma ./server/prisma
 COPY --from=builder /app/server/package.json ./server/package.json
 
 # Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nodejs
-RUN chown -R nodejs:nodejs /app
+RUN groupadd --system --gid 1001 nodejs && \
+    useradd --system --uid 1001 --gid nodejs nodejs && \
+    chown -R nodejs:nodejs /app
 USER nodejs
 
 WORKDIR /app/server
