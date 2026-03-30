@@ -11,8 +11,9 @@ RUN npm ci --workspace=server --omit=dev
 # Build application
 FROM base AS builder
 COPY package*.json ./
-COPY server/ ./server/
+COPY server/package*.json ./server/
 RUN npm ci --workspace=server
+COPY server/ ./server/
 RUN npm run build --workspace=server
 
 # Generate Prisma Client
@@ -21,21 +22,28 @@ RUN npx prisma generate
 
 # Production image
 FROM base AS runner
-WORKDIR /app/server
+WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy built application
-COPY --from=builder /app/server/dist ./dist
-COPY --from=builder /app/server/prisma ./prisma
-COPY --from=builder /app/node_modules ../node_modules
-COPY --from=builder /app/server/node_modules ./node_modules
-COPY --from=builder /app/server/package.json ./package.json
+# Copy root package.json for workspace structure
+COPY --from=builder /app/package*.json ./
+
+# Copy node_modules (installed at root by workspace)
+COPY --from=builder /app/node_modules ./node_modules
+
+# Copy server files
+COPY --from=builder /app/server/dist ./server/dist
+COPY --from=builder /app/server/prisma ./server/prisma
+COPY --from=builder /app/server/package.json ./server/package.json
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nodejs
+RUN chown -R nodejs:nodejs /app
 USER nodejs
+
+WORKDIR /app/server
 
 EXPOSE 3001
 

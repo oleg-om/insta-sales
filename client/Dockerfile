@@ -2,17 +2,23 @@ FROM node:20-alpine AS base
 
 WORKDIR /app
 
-# Install dependencies
-FROM base AS deps
-COPY package*.json ./
-COPY client/package*.json ./client/
-RUN npm ci --workspace=client
-
 # Build application
 FROM base AS builder
+
+# Copy workspace files
 COPY package*.json ./
-COPY client/ ./client/
+COPY client/package*.json ./client/
+
+# Install dependencies
 RUN npm ci --workspace=client
+
+# Copy client source
+COPY client/ ./client/
+
+# Build with environment variable
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
 WORKDIR /app/client
 RUN npm run build
 

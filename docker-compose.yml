@@ -55,20 +55,23 @@ services:
     container_name: insta-sales-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       - backend
     networks:
       - app-network
+    profiles:
+      - default
 
-  # Reverse proxy (optional, if you want to use nginx as reverse proxy)
+  # Reverse proxy with rate limiting and SSL (for production)
+  # To use: docker compose --profile with-proxy up -d
   nginx:
     image: nginx:alpine
     container_name: insta-sales-nginx
     restart: unless-stopped
     ports:
-      - "${PORT:-80}:80"
-      - "${SSL_PORT:-443}:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
