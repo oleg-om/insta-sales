@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { Prisma } from '@prisma/client';
+import {
+  PrismaClientInitializationError,
+  PrismaClientKnownRequestError,
+} from '@prisma/client/runtime/library';
 
 export class AppError extends Error {
   constructor(
@@ -23,12 +26,12 @@ export const errorHandler = (
     });
   }
 
-  if (err instanceof Prisma.PrismaClientInitializationError) {
+  if (err instanceof PrismaClientInitializationError) {
     console.error('Prisma (DB unavailable):', err.message);
     return res.status(503).json({ error: 'Service temporarily unavailable' });
   }
 
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (err instanceof PrismaClientKnownRequestError) {
     console.error('Prisma:', err.code, err.message);
   }
 
