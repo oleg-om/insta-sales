@@ -2,12 +2,11 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 import { AppError } from '../middleware/errorHandler.js';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const registerSchema = z.object({
   email: z.string().email(),

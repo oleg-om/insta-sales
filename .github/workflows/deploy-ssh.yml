@@ -137,11 +137,8 @@ jobs:
             
             # Run migrations (backend container must be running)
             echo "🔄 Running database migrations..."
-            if docker compose exec backend npx prisma migrate deploy; then
-              echo "✅ Migrations applied successfully"
-            else
-              echo "⚠️  Migration failed - continuing anyway (tables might already exist)"
-            fi
+            docker compose exec -T backend npx prisma migrate deploy
+            echo "✅ Migrations applied successfully"
             
             # Restart backend after migrations
             echo "🔄 Restarting backend..."

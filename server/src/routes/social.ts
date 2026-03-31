@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db.js';
 import { authenticateToken, AuthRequest } from '../middleware/auth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Instagram API response types
 interface InstagramTokenResponse {

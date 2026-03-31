@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { Prisma } from '@prisma/client';
 
 export class AppError extends Error {
   constructor(
@@ -20,6 +21,15 @@ export const errorHandler = (
     return res.status(err.statusCode).json({
       error: err.message
     });
+  }
+
+  if (err instanceof Prisma.PrismaClientInitializationError) {
+    console.error('Prisma (DB unavailable):', err.message);
+    return res.status(503).json({ error: 'Service temporarily unavailable' });
+  }
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    console.error('Prisma:', err.code, err.message);
   }
 
   console.error('Unhandled error:', err);
