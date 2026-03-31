@@ -67,12 +67,23 @@ jobs:
             
             # Update .env file with all secrets
             echo "📝 Creating .env file..."
+            # Percent-encode credentials for DATABASE_URL (Prisma P1013 if e.g. @ : # or spaces in password)
+            if ! command -v python3 >/dev/null 2>&1; then
+              echo "❌ ERROR: python3 is required on the server to build DATABASE_URL"
+              exit 1
+            fi
+            _pq_urlencode() {
+              python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read(), safe=''))"
+            }
+            ENC_PG_USER=$(printf '%s' "$POSTGRES_USER" | _pq_urlencode)
+            ENC_PG_PASS=$(printf '%s' "$POSTGRES_PASSWORD" | _pq_urlencode)
+            ENC_PG_DB=$(printf '%s' "$POSTGRES_DB" | _pq_urlencode)
             {
               echo "# Database"
               echo "POSTGRES_USER=${POSTGRES_USER}"
               echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
               echo "POSTGRES_DB=${POSTGRES_DB}"
-              echo "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+              echo "DATABASE_URL=postgresql://${ENC_PG_USER}:${ENC_PG_PASS}@postgres:5432/${ENC_PG_DB}"
               echo ""
               echo "# Server"
               echo "PORT=3001"
