@@ -16,21 +16,11 @@ jobs:
 
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.0
-        env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'instasales' }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB || 'instasales' }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          INSTAGRAM_CLIENT_ID: ${{ secrets.INSTAGRAM_CLIENT_ID }}
-          INSTAGRAM_CLIENT_SECRET: ${{ secrets.INSTAGRAM_CLIENT_SECRET }}
-          INSTAGRAM_REDIRECT_URI: ${{ secrets.INSTAGRAM_REDIRECT_URI }}
-          FRONTEND_URL: ${{ secrets.FRONTEND_URL || 'http://localhost' }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
-          envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,JWT_SECRET,INSTAGRAM_CLIENT_ID,INSTAGRAM_CLIENT_SECRET,INSTAGRAM_REDIRECT_URI,FRONTEND_URL
           script: |
             set -e
             
@@ -51,65 +41,18 @@ jobs:
               git clone https://github.com/${{ github.repository }}.git .
             fi
             
-            # Check required secrets
-            echo "🔐 Checking required secrets..."
-            if [ -z "$POSTGRES_PASSWORD" ]; then
-              echo "❌ ERROR: POSTGRES_PASSWORD secret is not set!"
-              echo "Please add it in GitHub Settings → Secrets → Actions"
+            # App config: use .env in project root on the server (not in git; create manually once)
+            echo "🔐 Checking .env on server..."
+            if [ ! -f .env ]; then
+              echo "❌ ERROR: .env is missing in $APP_DIR"
+              echo "Create it on the server (see .env.example): POSTGRES_*, DATABASE_URL, JWT_SECRET, FRONTEND_URL, Instagram vars."
               exit 1
             fi
-            
-            if [ -z "$JWT_SECRET" ]; then
-              echo "❌ ERROR: JWT_SECRET secret is not set!"
-              echo "Please add it in GitHub Settings → Secrets → Actions"
+            if ! grep -qE '^[[:space:]]*DATABASE_URL=' .env || ! grep -qE '^[[:space:]]*JWT_SECRET=' .env; then
+              echo "❌ ERROR: .env must define DATABASE_URL and JWT_SECRET"
               exit 1
             fi
-            
-            # Update .env file with all secrets
-            echo "📝 Creating .env file..."
-            # Percent-encode credentials for DATABASE_URL (Prisma P1013 if e.g. @ : # or spaces in password)
-            if ! command -v python3 >/dev/null 2>&1; then
-              echo "❌ ERROR: python3 is required on the server to build DATABASE_URL"
-              exit 1
-            fi
-            _pq_urlencode() {
-              python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read(), safe=''))"
-            }
-            ENC_PG_USER=$(printf '%s' "$POSTGRES_USER" | _pq_urlencode)
-            ENC_PG_PASS=$(printf '%s' "$POSTGRES_PASSWORD" | _pq_urlencode)
-            ENC_PG_DB=$(printf '%s' "$POSTGRES_DB" | _pq_urlencode)
-            {
-              echo "# Database"
-              echo "POSTGRES_USER=${POSTGRES_USER}"
-              echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
-              echo "POSTGRES_DB=${POSTGRES_DB}"
-              echo "DATABASE_URL=postgresql://${ENC_PG_USER}:${ENC_PG_PASS}@postgres:5432/${ENC_PG_DB}"
-              echo ""
-              echo "# Server"
-              echo "PORT=3001"
-              echo "NODE_ENV=production"
-              echo "JWT_SECRET=${JWT_SECRET}"
-              echo ""
-              echo "# Instagram OAuth"
-              echo "INSTAGRAM_CLIENT_ID=${INSTAGRAM_CLIENT_ID}"
-              echo "INSTAGRAM_CLIENT_SECRET=${INSTAGRAM_CLIENT_SECRET}"
-              echo "INSTAGRAM_REDIRECT_URI=${INSTAGRAM_REDIRECT_URI}"
-              echo ""
-              echo "# Frontend"
-              echo "FRONTEND_URL=${FRONTEND_URL}"
-            } > .env
-            
-            # Verify DATABASE_URL format
-            echo "🔍 Verifying DATABASE_URL format..."
-            DB_URL=$(grep DATABASE_URL .env | cut -d= -f2-)
-            if echo "$DB_URL" | grep -q "postgresql://.*:.*@postgres:5432/"; then
-              echo "✅ DATABASE_URL format looks correct"
-            else
-              echo "❌ ERROR: DATABASE_URL format is invalid!"
-              echo "Check that POSTGRES_PASSWORD is set correctly in GitHub Secrets"
-              echo "DATABASE_URL: $(echo $DB_URL | sed 's/:.*@/:****@/')"
-              exit 1
-            fi
+            echo "✅ Using existing .env (not overwritten by this workflow)"
             
             # Stop old containers
             echo "🛑 Stopping old containers..."
@@ -176,14 +119,12 @@ jobs:
             echo ""
             echo "🎉 Deployment completed successfully!"
             echo ""
-            echo "📍 Application should be available at: ${{ secrets.FRONTEND_URL || 'http://your-server' }}"
+            echo "📍 Check FRONTEND_URL in your server .env for the public URL"
 
       - name: Notify on success
         if: success()
         run: |
-          echo "✅ Deployment successful!"
-          echo "🌐 Frontend: ${{ secrets.FRONTEND_URL || 'http://your-server' }}"
-          echo "🔌 Backend: ${{ secrets.FRONTEND_URL || 'http://your-server' }}/health"
+          echo "✅ Deployment successful (URLs are configured in server .env)"
 
       - name: Notify on failure
         if: failure()
