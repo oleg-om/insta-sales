@@ -28,6 +28,12 @@ RUN npx prisma generate
 
 # Production image
 FROM base AS runner
+
+# Install wget for health checks
+RUN apt-get update && apt-get install -y \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 ENV NODE_ENV=production
