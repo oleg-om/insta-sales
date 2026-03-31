@@ -67,26 +67,26 @@ jobs:
             
             # Update .env file with all secrets
             echo "📝 Creating .env file..."
-            cat > .env << ENVEOF
-# Database
-POSTGRES_USER=${POSTGRES_USER}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-POSTGRES_DB=${POSTGRES_DB}
-DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-
-# Server
-PORT=3001
-NODE_ENV=production
-JWT_SECRET=${JWT_SECRET}
-
-# Instagram OAuth
-INSTAGRAM_CLIENT_ID=${INSTAGRAM_CLIENT_ID}
-INSTAGRAM_CLIENT_SECRET=${INSTAGRAM_CLIENT_SECRET}
-INSTAGRAM_REDIRECT_URI=${INSTAGRAM_REDIRECT_URI}
-
-# Frontend
-FRONTEND_URL=${FRONTEND_URL}
-ENVEOF
+            {
+              echo "# Database"
+              echo "POSTGRES_USER=${POSTGRES_USER}"
+              echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}"
+              echo "POSTGRES_DB=${POSTGRES_DB}"
+              echo "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+              echo ""
+              echo "# Server"
+              echo "PORT=3001"
+              echo "NODE_ENV=production"
+              echo "JWT_SECRET=${JWT_SECRET}"
+              echo ""
+              echo "# Instagram OAuth"
+              echo "INSTAGRAM_CLIENT_ID=${INSTAGRAM_CLIENT_ID}"
+              echo "INSTAGRAM_CLIENT_SECRET=${INSTAGRAM_CLIENT_SECRET}"
+              echo "INSTAGRAM_REDIRECT_URI=${INSTAGRAM_REDIRECT_URI}"
+              echo ""
+              echo "# Frontend"
+              echo "FRONTEND_URL=${FRONTEND_URL}"
+            } > .env
             
             # Verify DATABASE_URL format
             echo "🔍 Verifying DATABASE_URL format..."
