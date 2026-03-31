@@ -81,20 +81,32 @@ jobs:
             docker compose up -d postgres
             
             # Wait for database
-            echo "⏳ Waiting for database..."
+            echo "⏳ Waiting for database to be ready..."
             sleep 15
-            
-            # Run migrations
-            echo "🔄 Running database migrations..."
-            docker compose run --rm backend sh -c "npx prisma migrate deploy" || echo "⚠️  Migration warning (might be OK for first deploy)"
             
             # Start all services
             echo "▶️  Starting all services..."
             docker compose up -d
             
-            # Wait for services
+            # Wait a bit for backend container to be ready
+            echo "⏳ Waiting for backend container..."
+            sleep 10
+            
+            # Run migrations (backend container must be running)
+            echo "🔄 Running database migrations..."
+            if docker compose exec backend npx prisma migrate deploy; then
+              echo "✅ Migrations applied successfully"
+            else
+              echo "⚠️  Migration failed - continuing anyway (tables might already exist)"
+            fi
+            
+            # Restart backend after migrations
+            echo "🔄 Restarting backend..."
+            docker compose restart backend
+            
+            # Wait for services to fully start
             echo "⏳ Waiting for services to start..."
-            sleep 20
+            sleep 15
             
             # Check backend health
             echo "🏥 Checking backend health..."
