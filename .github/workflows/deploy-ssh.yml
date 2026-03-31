@@ -16,11 +16,21 @@ jobs:
 
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.0
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER || 'instasales' }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB || 'instasales' }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          INSTAGRAM_CLIENT_ID: ${{ secrets.INSTAGRAM_CLIENT_ID }}
+          INSTAGRAM_CLIENT_SECRET: ${{ secrets.INSTAGRAM_CLIENT_SECRET }}
+          INSTAGRAM_REDIRECT_URI: ${{ secrets.INSTAGRAM_REDIRECT_URI }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL || 'http://localhost' }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
+          envs: POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,JWT_SECRET,INSTAGRAM_CLIENT_ID,INSTAGRAM_CLIENT_SECRET,INSTAGRAM_REDIRECT_URI,FRONTEND_URL
           script: |
             set -e
             
@@ -43,13 +53,13 @@ jobs:
             
             # Check required secrets
             echo "🔐 Checking required secrets..."
-            if [ -z "${{ secrets.POSTGRES_PASSWORD }}" ]; then
+            if [ -z "$POSTGRES_PASSWORD" ]; then
               echo "❌ ERROR: POSTGRES_PASSWORD secret is not set!"
               echo "Please add it in GitHub Settings → Secrets → Actions"
               exit 1
             fi
             
-            if [ -z "${{ secrets.JWT_SECRET }}" ]; then
+            if [ -z "$JWT_SECRET" ]; then
               echo "❌ ERROR: JWT_SECRET secret is not set!"
               echo "Please add it in GitHub Settings → Secrets → Actions"
               exit 1
@@ -57,35 +67,36 @@ jobs:
             
             # Update .env file with all secrets
             echo "📝 Creating .env file..."
-            cat > .env << 'ENVEOF'
-            # Database
-            POSTGRES_USER=${{ secrets.POSTGRES_USER || 'instasales' }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB || 'instasales' }}
-            DATABASE_URL=postgresql://${{ secrets.POSTGRES_USER || 'instasales' }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/${{ secrets.POSTGRES_DB || 'instasales' }}
-            
-            # Server
-            PORT=3001
-            NODE_ENV=production
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            
-            # Instagram OAuth
-            INSTAGRAM_CLIENT_ID=${{ secrets.INSTAGRAM_CLIENT_ID }}
-            INSTAGRAM_CLIENT_SECRET=${{ secrets.INSTAGRAM_CLIENT_SECRET }}
-            INSTAGRAM_REDIRECT_URI=${{ secrets.INSTAGRAM_REDIRECT_URI }}
-            
-            # Frontend
-            FRONTEND_URL=${{ secrets.FRONTEND_URL || 'http://localhost' }}
-            ENVEOF
+            cat > .env << ENVEOF
+# Database
+POSTGRES_USER=${POSTGRES_USER}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+POSTGRES_DB=${POSTGRES_DB}
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+
+# Server
+PORT=3001
+NODE_ENV=production
+JWT_SECRET=${JWT_SECRET}
+
+# Instagram OAuth
+INSTAGRAM_CLIENT_ID=${INSTAGRAM_CLIENT_ID}
+INSTAGRAM_CLIENT_SECRET=${INSTAGRAM_CLIENT_SECRET}
+INSTAGRAM_REDIRECT_URI=${INSTAGRAM_REDIRECT_URI}
+
+# Frontend
+FRONTEND_URL=${FRONTEND_URL}
+ENVEOF
             
             # Verify DATABASE_URL format
             echo "🔍 Verifying DATABASE_URL format..."
-            if grep -q "postgresql://.*:.*@postgres:5432/" .env; then
+            DB_URL=$(grep DATABASE_URL .env | cut -d= -f2-)
+            if echo "$DB_URL" | grep -q "postgresql://.*:.*@postgres:5432/"; then
               echo "✅ DATABASE_URL format looks correct"
             else
               echo "❌ ERROR: DATABASE_URL format is invalid!"
               echo "Check that POSTGRES_PASSWORD is set correctly in GitHub Secrets"
-              cat .env | grep DATABASE_URL | sed 's/:.*@/:****@/'
+              echo "DATABASE_URL: $(echo $DB_URL | sed 's/:.*@/:****@/')"
               exit 1
             fi
             
