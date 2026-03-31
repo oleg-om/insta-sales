@@ -127,22 +127,14 @@ jobs:
             echo "⏳ Waiting for database to be ready..."
             sleep 15
             
-            # Start all services
-            echo "▶️  Starting all services..."
-            docker compose up -d
-            
-            # Wait a bit for backend container to be ready
-            echo "⏳ Waiting for backend container..."
-            sleep 10
-            
-            # Run migrations (backend container must be running)
+            # Migrations via one-off container (exec fails if backend is crash-looping)
             echo "🔄 Running database migrations..."
-            docker compose exec -T backend npx prisma migrate deploy
+            docker compose run --rm --no-deps -T backend npx prisma migrate deploy
             echo "✅ Migrations applied successfully"
             
-            # Restart backend after migrations
-            echo "🔄 Restarting backend..."
-            docker compose restart backend
+            # Start app (backend needs DB schema from migrations above)
+            echo "▶️  Starting all services..."
+            docker compose up -d
             
             # Wait for services to fully start
             echo "⏳ Waiting for services to start..."
