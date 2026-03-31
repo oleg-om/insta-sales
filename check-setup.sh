@@ -84,11 +84,13 @@ if [ -f ".env" ]; then
     echo -e "${GREEN}✓${NC} Found"
     
     # Check required variables
-    echo -n "DATABASE_URL... "
+    echo -n "DB config... "
     if grep -q "DATABASE_URL=" .env; then
-        echo -e "${GREEN}✓${NC}"
+        echo -e "${GREEN}✓${NC} DATABASE_URL (local dev)"
+    elif grep -q "POSTGRES_PASSWORD=" .env; then
+        echo -e "${GREEN}✓${NC} POSTGRES_* (Docker / auto DATABASE_URL)"
     else
-        echo -e "${RED}✗${NC} Missing"
+        echo -e "${RED}✗${NC} Need DATABASE_URL or POSTGRES_PASSWORD"
     fi
     
     echo -n "JWT_SECRET... "

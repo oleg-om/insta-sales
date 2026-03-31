@@ -48,9 +48,11 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/server/dist ./server/dist
 COPY --from=builder /app/server/prisma ./server/prisma
 COPY --from=builder /app/server/package.json ./server/package.json
+COPY server/docker-entrypoint.sh ./server/docker-entrypoint.sh
 
 # Create non-root user
-RUN groupadd --system --gid 1001 nodejs && \
+RUN chmod +x /app/server/docker-entrypoint.sh && \
+    groupadd --system --gid 1001 nodejs && \
     useradd --system --uid 1001 --gid nodejs nodejs && \
     chown -R nodejs:nodejs /app
 USER nodejs
@@ -59,4 +61,5 @@ WORKDIR /app/server
 
 EXPOSE 3001
 
+ENTRYPOINT ["/app/server/docker-entrypoint.sh"]
 CMD ["node", "dist/index.js"]

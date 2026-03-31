@@ -45,11 +45,12 @@ jobs:
             echo "🔐 Checking .env on server..."
             if [ ! -f .env ]; then
               echo "❌ ERROR: .env is missing in $APP_DIR"
-              echo "Create it on the server (see .env.example): POSTGRES_*, DATABASE_URL, JWT_SECRET, FRONTEND_URL, Instagram vars."
+              echo "Create it on the server (see .env.example): POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, JWT_SECRET, FRONTEND_URL, Instagram vars."
+              echo "For Docker, omit DATABASE_URL — the backend image builds it from POSTGRES_* (same password as the postgres container)."
               exit 1
             fi
-            if ! grep -qE '^[[:space:]]*DATABASE_URL=' .env || ! grep -qE '^[[:space:]]*JWT_SECRET=' .env; then
-              echo "❌ ERROR: .env must define DATABASE_URL and JWT_SECRET"
+            if ! grep -qE '^[[:space:]]*POSTGRES_PASSWORD=' .env || ! grep -qE '^[[:space:]]*JWT_SECRET=' .env; then
+              echo "❌ ERROR: .env must define POSTGRES_PASSWORD and JWT_SECRET"
               exit 1
             fi
             echo "✅ Using existing .env (not overwritten by this workflow)"
